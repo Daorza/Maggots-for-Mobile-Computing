@@ -1,0 +1,18 @@
+venv/
+__pycache__/
+*.pyc
+
+# Streamlit
+.streamlit/
+
+# Environment variables
+.env
+
+maggot_sensor_data.json
+maggot_fase.json
+maggot_status_batas.json
+maggot_all_limits.json
+maggot_pangan.json
+maggot_berat.json
+maggot_users.json
+maggots.db

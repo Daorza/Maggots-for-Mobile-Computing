@@ -1,0 +1,11 @@
+streamlit
+paho-mqtt
+pandas
+plotly
+requests
+reportlab
+openpyxl
+python-dotenv
+groq
+fastapi
+PyJWT
