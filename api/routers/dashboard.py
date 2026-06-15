@@ -111,6 +111,11 @@ def update_settings(req: SettingsUpdate):
             VALUES (?, ?, ?, ?)
         """, (user_id, start_date, req.phase_override_enabled, req.manual_phase))
         conn.commit()
+        
+        from mqtt_worker import publish_fase
+        if req.phase_override_enabled == 1 and req.manual_phase:
+            publish_fase(req.manual_phase)
+            
         return {"status": "success"}
     finally:
         conn.close()
@@ -122,3 +127,53 @@ def reconnect_mqtt():
     if success:
         return {"status": "success", "message": "Berhasil memicu koneksi ulang MQTT"}
     return {"status": "error", "message": "Gagal memicu koneksi ulang"}
+
+from typing import List
+
+class ThresholdUpdate(BaseModel):
+    phase: str
+    temperature_min: float
+    temperature_max: float
+    humidity_min: float
+    humidity_max: float
+
+class BulkThresholdUpdate(BaseModel):
+    thresholds: List[ThresholdUpdate]
+
+@router.get("/thresholds")
+def get_thresholds():
+    conn = get_db_connection()
+    try:
+        data = conn.execute("SELECT phase, temperature_min, temperature_max, humidity_min, humidity_max FROM phase_thresholds").fetchall()
+        return {"thresholds": [dict(row) for row in data]}
+    finally:
+        conn.close()
+
+@router.put("/thresholds")
+def update_thresholds(req: BulkThresholdUpdate):
+    conn = get_db_connection()
+    try:
+        from mqtt_worker import publish_limits
+        for th in req.thresholds:
+            conn.execute("""
+                UPDATE phase_thresholds 
+                SET temperature_min = ?, temperature_max = ?, humidity_min = ?, humidity_max = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE phase = ?
+            """, (th.temperature_min, th.temperature_max, th.humidity_min, th.humidity_max, th.phase))
+            
+            # Publish to ESP32
+            payload = {
+                "fase": th.phase,
+                "tempMin": th.temperature_min,
+                "tempMax": th.temperature_max,
+                "humidMin": th.humidity_min,
+                "humidMax": th.humidity_max
+            }
+            publish_limits(payload)
+            
+        conn.commit()
+        return {"status": "success", "message": "Ambang batas berhasil diperbarui"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+    finally:
+        conn.close()

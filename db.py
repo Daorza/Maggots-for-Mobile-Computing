@@ -97,11 +97,10 @@ def init_db():
 
     # Seed phase_thresholds
     default_thresholds = [
-        ("Telur", 27.0, 30.0, 60.0, 80.0),
-        ("Larva", 27.0, 32.0, 60.0, 75.0),
-        ("Prepupa", 25.0, 30.0, 50.0, 70.0),
-        ("Pupa", 25.0, 30.0, 50.0, 70.0),
-        ("Lalat Dewasa", 27.0, 32.0, 50.0, 70.0),
+        ("Fase Telur", 28.0, 35.0, 60.0, 80.0),
+        ("Fase Larva", 27.0, 30.0, 60.0, 80.0),
+        ("Fase Pupa", 27.0, 30.0, 0.0, 40.0),
+        ("Fase Lalat", 27.5, 37.5, 60.0, 70.0),
     ]
     
     for th in default_thresholds:

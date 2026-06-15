@@ -8,6 +8,8 @@ import InputData from './pages/InputData';
 import AIAnalysis from './pages/AIAnalysis';
 import Laporan from './pages/Laporan';
 import Edukasi from './pages/Edukasi';
+import Settings from './pages/Settings';
+// Trigger Vite Reload
 
 function App() {
   return (
@@ -22,6 +24,7 @@ function App() {
           <Route path="ai" element={<AIAnalysis />} />
           <Route path="laporan" element={<Laporan />} />
           <Route path="edukasi" element={<Edukasi />} />
+          <Route path="settings" element={<Settings />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>

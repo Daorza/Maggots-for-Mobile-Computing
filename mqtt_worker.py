@@ -19,6 +19,8 @@ from config import SENSOR_LOG_INTERVAL_SECONDS
 
 last_sensor_log_time = 0
 is_mqtt_connected_flag = False
+last_alert_time = {"temperature": 0.0, "humidity": 0.0}
+ALERT_COOLDOWN_SECONDS = 600
 
 def _mqtt_worker():
     def on_connect(client, userdata, flags, reason_code, properties=None):
@@ -64,17 +66,21 @@ def _mqtt_worker():
                             VALUES (?, ?, ?)
                         """, (suhu, kelembapan, current_phase))
                         
-                        # 3. Check for Alerts
+                        # 3. Check for Alerts with Cooldown
                         alerts_to_insert = []
                         if suhu < limits["tempMin"] or suhu > limits["tempMax"]:
-                            severity = "danger" if (suhu < limits["tempMin"] - 2 or suhu > limits["tempMax"] + 2) else "warning"
-                            msg = f"Suhu tidak normal: {suhu}°C (Batas: {limits['tempMin']}-{limits['tempMax']})"
-                            alerts_to_insert.append(("temperature", severity, msg, suhu, limits["tempMin"], limits["tempMax"]))
+                            if now - last_alert_time["temperature"] >= ALERT_COOLDOWN_SECONDS:
+                                severity = "danger" if (suhu < limits["tempMin"] - 2 or suhu > limits["tempMax"] + 2) else "warning"
+                                msg = f"Suhu tidak normal: {suhu}°C (Batas: {limits['tempMin']}-{limits['tempMax']})"
+                                alerts_to_insert.append(("temperature", severity, msg, suhu, limits["tempMin"], limits["tempMax"]))
+                                last_alert_time["temperature"] = now
                             
                         if kelembapan < limits["humidMin"] or kelembapan > limits["humidMax"]:
-                            severity = "danger" if (kelembapan < limits["humidMin"] - 10 or kelembapan > limits["humidMax"] + 10) else "warning"
-                            msg = f"Kelembapan tidak normal: {kelembapan}% (Batas: {limits['humidMin']}-{limits['humidMax']})"
-                            alerts_to_insert.append(("humidity", severity, msg, kelembapan, limits["humidMin"], limits["humidMax"]))
+                            if now - last_alert_time["humidity"] >= ALERT_COOLDOWN_SECONDS:
+                                severity = "danger" if (kelembapan < limits["humidMin"] - 10 or kelembapan > limits["humidMax"] + 10) else "warning"
+                                msg = f"Kelembapan tidak normal: {kelembapan}% (Batas: {limits['humidMin']}-{limits['humidMax']})"
+                                alerts_to_insert.append(("humidity", severity, msg, kelembapan, limits["humidMin"], limits["humidMax"]))
+                                last_alert_time["humidity"] = now
                             
                         for alert in alerts_to_insert:
                             conn.execute("""

@@ -86,15 +86,18 @@ export default function Dashboard() {
   if (loading) return <div className="animate-pulse flex space-x-4 p-6">Memuat dashboard...</div>;
   if (!metrics || !deviceStatus) return <div className="p-6">Gagal memuat data.</div>;
 
-  const isSafe = alerts.length === 0;
-  const hasDanger = alerts.some(a => a.severity === 'danger');
+  const isTempOut = metrics.sensor.temperature < deviceStatus.active_threshold.tempMin || metrics.sensor.temperature > deviceStatus.active_threshold.tempMax;
+  const isHumidOut = metrics.sensor.humidity < deviceStatus.active_threshold.humidMin || metrics.sensor.humidity > deviceStatus.active_threshold.humidMax;
+
+  const isSafe = alerts.length === 0 && !isTempOut && !isHumidOut;
+  const hasDanger = alerts.some(a => a.severity === 'danger') || isTempOut || isHumidOut;
   const safetyStatus = isSafe ? 'Aman' : (hasDanger ? 'Bahaya' : 'Peringatan');
   const safetyColor = isSafe ? 'text-green-600 bg-green-50 border-green-200' : (hasDanger ? 'text-red-600 bg-red-50 border-red-200' : 'text-orange-600 bg-orange-50 border-orange-200');
   const SafetyIcon = isSafe ? CheckCircle : AlertTriangle;
 
   const topCards = [
-    { label: 'Suhu Kandang', value: `${metrics.sensor.temperature}°C`, icon: ThermometerSun, color: 'text-orange-500', bg: 'bg-orange-50', border: 'border-orange-100' },
-    { label: 'Kelembapan', value: `${metrics.sensor.humidity}%`, icon: Droplets, color: 'text-blue-500', bg: 'bg-blue-50', border: 'border-blue-100' },
+    { label: 'Suhu Kandang', value: `${metrics.sensor.temperature}°C`, icon: ThermometerSun, color: isTempOut ? 'text-red-500' : 'text-orange-500', bg: isTempOut ? 'bg-red-50' : 'bg-orange-50', border: isTempOut ? 'border-red-200 shadow-sm shadow-red-100' : 'border-orange-100' },
+    { label: 'Kelembapan', value: `${metrics.sensor.humidity}%`, icon: Droplets, color: isHumidOut ? 'text-red-500' : 'text-blue-500', bg: isHumidOut ? 'bg-red-50' : 'bg-blue-50', border: isHumidOut ? 'border-red-200 shadow-sm shadow-red-100' : 'border-blue-100' },
     { label: 'Berat Maggot', value: `${metrics.produksi.berat_maggot} kg`, icon: Scale, color: 'text-emerald-500', bg: 'bg-emerald-50', border: 'border-emerald-100' },
     { label: 'Total Produksi', value: `Rp ${(metrics.produksi.total_produksi * 7000).toLocaleString('id-ID')}`, icon: TrendingUp, color: 'text-indigo-500', bg: 'bg-indigo-50', border: 'border-indigo-100' },
   ];
@@ -201,11 +204,10 @@ export default function Dashboard() {
                     className="text-sm p-1.5 border rounded-lg outline-none"
                   >
                     <option value="Auto">Otomatis (Berdasarkan Umur)</option>
-                    <option value="Telur">Telur</option>
-                    <option value="Larva">Larva</option>
-                    <option value="Prepupa">Prepupa</option>
-                    <option value="Pupa">Pupa</option>
-                    <option value="Lalat Dewasa">Lalat Dewasa</option>
+                    <option value="Fase Telur">Fase Telur</option>
+                    <option value="Fase Larva">Fase Larva</option>
+                    <option value="Fase Pupa">Fase Pupa</option>
+                    <option value="Fase Lalat">Fase Lalat</option>
                   </select>
                   <div className="flex gap-2">
                     <button onClick={handleUpdatePhase} disabled={isUpdatingPhase} className="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-md hover:bg-blue-700 disabled:opacity-50">

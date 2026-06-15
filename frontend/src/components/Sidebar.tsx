@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Activity, Edit3, Bot, FileText, BookOpen, LogOut } from 'lucide-react';
+import { LayoutDashboard, Activity, Edit3, Bot, FileText, BookOpen, LogOut, Settings } from 'lucide-react';
 import clsx from 'clsx';
 
 const menuItems = [
@@ -9,6 +9,7 @@ const menuItems = [
   { path: '/ai', label: 'AI Analysis', icon: Bot },
   { path: '/laporan', label: 'Laporan', icon: FileText },
   { path: '/edukasi', label: 'Edukasi', icon: BookOpen },
+  { path: '/settings', label: 'Pengaturan', icon: Settings },
 ];
 
 export default function Sidebar() {

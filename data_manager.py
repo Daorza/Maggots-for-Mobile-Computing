@@ -20,17 +20,16 @@ def get_db_connection():
 
 def calculate_auto_phase(start_date_str):
     if not start_date_str:
-        return "Telur"
+        return "Fase Telur"
     try:
         start_date = datetime.strptime(start_date_str.split(" ")[0], "%Y-%m-%d").date()
         age = (date.today() - start_date).days
-        if age <= 3: return "Telur"
-        elif age <= 18: return "Larva"
-        elif age <= 23: return "Prepupa"
-        elif age <= 32: return "Pupa"
-        else: return "Lalat Dewasa"
+        if age <= 7: return "Fase Telur"
+        elif age <= 28: return "Fase Larva"
+        elif age <= 49: return "Fase Pupa"
+        else: return "Fase Lalat"
     except Exception:
-        return "Telur"
+        return "Fase Telur"
 
 def active_limits():
     conn = get_db_connection()
@@ -38,7 +37,7 @@ def active_limits():
         settings = conn.execute("SELECT * FROM cultivation_settings ORDER BY id DESC LIMIT 1").fetchone()
         
         if not settings:
-            active_phase = "Telur"
+            active_phase = "Fase Telur"
             is_auto = True
         else:
             if settings["phase_override_enabled"] == 1 and settings["manual_phase"]:
