@@ -111,6 +111,29 @@ def init_db():
         VALUES (?, ?, ?, ?, ?)
         """, th)
 
+    # 7. ai_chats
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS ai_chats (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        title TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(user_id) REFERENCES users(id)
+    )
+    """)
+
+    # 8. ai_chat_messages
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS ai_chat_messages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        chat_id INTEGER NOT NULL,
+        role TEXT NOT NULL,
+        content TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(chat_id) REFERENCES ai_chats(id) ON DELETE CASCADE
+    )
+    """)
+
     conn.commit()
     conn.close()
 

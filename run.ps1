@@ -11,12 +11,12 @@ if (-not (Test-Path $Python)) {
     exit 1
 }
 
-if (-not $env:GROQ_API_KEY) {
-    $env:GROQ_API_KEY = Read-Host "Enter GROQ_API_KEY for this session"
-}
+Write-Host "Starting FastAPI Backend..." -ForegroundColor Green
+Start-Process -FilePath $Python -ArgumentList "-m uvicorn main:app --port 8000 --reload" -NoNewWindow
 
-if (-not $env:GROQ_MODEL) {
-    $env:GROQ_MODEL = "llama-3.3-70b-versatile"
-}
+Write-Host "Starting React Frontend..." -ForegroundColor Green
+Set-Location "$ProjectRoot\frontend"
+Start-Process -FilePath "npm.cmd" -ArgumentList "run dev" -NoNewWindow
 
-& $Python -m streamlit run dashboardd.py
+Write-Host "Services are running! Press Ctrl+C to terminate." -ForegroundColor Cyan
+while ($true) { Start-Sleep -Seconds 1 }

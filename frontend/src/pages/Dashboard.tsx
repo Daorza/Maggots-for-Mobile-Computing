@@ -13,6 +13,7 @@ export default function Dashboard() {
   const [isEditingPhase, setIsEditingPhase] = useState(false);
   const [selectedPhase, setSelectedPhase] = useState('');
   const [isUpdatingPhase, setIsUpdatingPhase] = useState(false);
+  const [isReconnecting, setIsReconnecting] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -67,11 +68,18 @@ export default function Dashboard() {
   };
 
   const handleReconnect = async () => {
+    if (isReconnecting) return;
+    setIsReconnecting(true);
     try {
       await api.post('/dashboard/mqtt-reconnect');
-      fetchData();
+      // Wait 2 seconds for MQTT to establish connection before refreshing status
+      setTimeout(() => {
+        fetchData();
+        setIsReconnecting(false);
+      }, 2000);
     } catch (err) {
       console.error("Failed to reconnect MQTT", err);
+      setIsReconnecting(false);
     }
   };
 
@@ -101,8 +109,17 @@ export default function Dashboard() {
         
         <div className="flex items-center gap-3">
           {!deviceStatus.mqtt_connected && (
-            <button onClick={handleReconnect} className="text-xs bg-indigo-50 text-indigo-600 font-medium px-3 py-2 rounded-xl border border-indigo-100 hover:bg-indigo-100 transition-colors">
-              🔄 Sambung Ulang MQTT
+            <button 
+              onClick={handleReconnect} 
+              disabled={isReconnecting}
+              className={`text-xs font-medium px-3 py-2 rounded-xl border transition-colors flex items-center gap-2 ${
+                isReconnecting 
+                  ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed' 
+                  : 'bg-indigo-50 text-indigo-600 border-indigo-100 hover:bg-indigo-100 cursor-pointer'
+              }`}
+            >
+              <span className={isReconnecting ? 'animate-spin' : ''}>🔄</span>
+              {isReconnecting ? 'Menyambungkan...' : 'Sambung Ulang MQTT'}
             </button>
           )}
           

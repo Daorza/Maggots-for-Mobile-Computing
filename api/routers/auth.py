@@ -2,12 +2,66 @@ import jwt
 from datetime import datetime, timedelta
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
-from auth import verify_user, register_user, init_db
+import sqlite3
+import hashlib
+from config import AUTH_DB_FILE
+
+def init_db():
+    conn = sqlite3.connect(AUTH_DB_FILE)
+    c = conn.cursor()
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            salt TEXT NOT NULL,
+            password_hash TEXT NOT NULL,
+            created_at TEXT NOT NULL
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+def hash_password(password, salt):
+    return hashlib.sha256(f"{salt}:{password}".encode("utf-8")).hexdigest()
+
+def verify_user(email, password):
+    conn = sqlite3.connect(AUTH_DB_FILE)
+    c = conn.cursor()
+    c.execute("SELECT id, name, email, salt, password_hash FROM users WHERE email = ?", (email,))
+    user = c.fetchone()
+    conn.close()
+    if user:
+        user_id, name, user_email, salt, password_hash = user
+        if password_hash == hash_password(password, salt):
+            return {"id": user_id, "name": name, "email": user_email}
+    return None
+
+def register_user(name, email, password):
+    conn = sqlite3.connect(AUTH_DB_FILE)
+    c = conn.cursor()
+    try:
+        import os
+        salt = os.urandom(16).hex()
+        pwd_hash = hash_password(password, salt)
+        created_at = datetime.now().isoformat(timespec="seconds")
+        c.execute(
+            "INSERT INTO users (name, email, salt, password_hash, created_at) VALUES (?, ?, ?, ?, ?)",
+            (name, email, salt, pwd_hash, created_at),
+        )
+        conn.commit()
+        return True, "Akun berhasil dibuat. Silakan login."
+    except sqlite3.IntegrityError:
+        return False, "Email sudah terdaftar."
+    finally:
+        conn.close()
+
+import os
 
 router = APIRouter()
 init_db()
 
-SECRET_KEY = "super-secret-maggot-key-for-local-dev-only"
+SECRET_KEY = os.getenv("SECRET_KEY", "super-secret-maggot-key-for-local-dev-only")
 ALGORITHM = "HS256"
 
 class LoginRequest(BaseModel):
